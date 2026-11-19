@@ -68,6 +68,7 @@ def test_book_lifecycle(books: BooksClient) -> None:
     assert patched.json()["data"]["price"] == 24.99
 
     deleted = books.delete(book_id)
+    print('f')
     assert deleted.status == 200
     assert books.get(book_id).status == 404
 
