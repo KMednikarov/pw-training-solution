@@ -1,0 +1,31 @@
+name: API tests
+on:
+  pull_request:
+  schedule:
+    - cron: '0 5 * * 1-5'
+
+jobs:
+  api:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: >
+          pytest -n auto --reruns 1
+          --junitxml=results/junit.xml
+          --html=results/report.html --self-contained-html
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          API_USER: ${{ secrets.API_USER }}
+          API_PASSWORD: ${{ secrets.API_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results
+          path: results/
+          retention-days: 14
