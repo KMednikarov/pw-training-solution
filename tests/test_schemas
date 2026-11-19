@@ -1,0 +1,27 @@
+from playwright.sync_api import APIRequestContext, expect
+
+from schemas.book import Book
+
+
+def test_books_match_contract(api: APIRequestContext) -> None:
+    response = api.get("/api/Books", params={"limit": 10})
+    expect(response).to_be_ok()
+
+    for item in response.json():
+        # raises ValidationError, listing every bad field, if the shape is wrong
+        Book.model_validate(item)
+
+from playwright.sync_api import APIRequestContext
+
+from helpers.waiting import wait_until
+
+
+def test_report_job_completes(api: APIRequestContext) -> None:
+    started = api.post("/api/jobs", data={"type": "report", "durationSeconds": 2})
+    assert started.status == 202
+    status_url = started.headers["location"]
+
+    wait_until(lambda: api.get(status_url).json()["status"] == "completed", timeout=20)
+
+    job = api.get(status_url).json()
+    assert api.get(job["resultUrl"]).status == 200
